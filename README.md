@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Joe's Pizza GTA - Restaurant Delivery MVP
+
+A full-stack restaurant delivery MVP built with Next.js, Stripe, Supabase, and DoorDash Drive integration.
+
+## Current Status: Phase 1 ✅ Complete
+
+### Phase 1: Project Setup & Base Structure
+**Goal:** Scaffolding + basic deploy infrastructure
+**Status:** ✅ Completed
+
+#### What was done:
+- ✅ Next.js 15 with App Router and TypeScript
+- ✅ TailwindCSS v4 with custom restaurant theme (warm pizza colors)
+- ✅ Navbar with Home/Menu navigation links
+- ✅ Footer with restaurant info & quick links
+- ✅ SEO metadata for Joe's Pizza GTA
+- ✅ Installed all Phase 1 dependencies:
+  - @supabase/supabase-js (database)
+  - stripe & @stripe/stripe-js (payments)
+  - @stripe/react-stripe-js (payment forms)
+  - lucide-react (icons)
+- ✅ Environment variables configured (.env.local with Stripe test keys)
+
+#### Files created/modified:
+- `app/layout.tsx` - Main layout with navbar & footer
+- `tailwind.config.ts` - Restaurant theme configuration
+- `.env.local` - Stripe test API keys (already configured)
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Upcoming Phases
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Phase 2: Supabase Setup & Database Schema (Next)
+- Create Supabase project (free tier)
+- Setup database schema: restaurants, categories, menu_items, orders
+- Enable Row Level Security (RLS)
+- Seed sample menu data
 
-## Learn More
+### Phase 3: SEO-Optimized Menu Page
+- Server-rendered menu with categories
+- Mobile-first UI with Next/Image
+- Shopping cart context
+- Dynamic SEO metadata
 
-To learn more about Next.js, take a look at the following resources:
+### Phase 4: Restaurant Auth & Admin Dashboard
+- Email/password authentication
+- Protected admin routes
+- Order management
+- Menu item editing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Phase 5: Stripe Checkout Integration
+- Payment checkout flow
+- Webhook handling
+- Order confirmation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Phase 6: DoorDash Drive Integration
+- Delivery quotes & dispatch
+- Order tracking
 
-## Deploy on Vercel
+### Phase 7: Order Tracking & Polish
+- Real-time order tracking
+- SMS notifications
+- Final optimization
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Framework:** Next.js 15 (App Router)
+- **Styling:** TailwindCSS v4
+- **Database:** Supabase
+- **Payments:** Stripe
+- **Delivery:** DoorDash Drive API
+- **Language:** TypeScript
+
+## Environment Variables
+
+Configured in `.env.local`:
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe public key (exposed to client)
+- `STRIPE_SECRET_KEY` - Stripe secret key (server-side only)
+
+## Deploy
+
+```bash
+npm run build
+npm start
+```
+
+Ready to deploy to Vercel once all phases are complete.
