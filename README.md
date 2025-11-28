@@ -2,29 +2,48 @@
 
 A full-stack restaurant delivery MVP built with Next.js, Stripe, Supabase, and DoorDash Drive integration.
 
-## Current Status: Phase 1 ✅ Complete
+## Current Status: Phase 2 ✅ Complete
 
-### Phase 1: Project Setup & Base Structure
-**Goal:** Scaffolding + basic deploy infrastructure
+### Phase 1: Project Setup & Base Structure ✅ Completed
+- ✅ Next.js 15 with App Router and TypeScript
+- ✅ TailwindCSS v4 with custom restaurant theme
+- ✅ Navbar with Home/Menu navigation links
+- ✅ Footer with restaurant info & quick links
+- ✅ All dependencies installed & environment variables configured
+- ✅ Deployed to Vercel
+
+### Phase 2: Supabase Setup & Database Schema ✅ Completed
+**Goal:** Relational database for menu/orders with RLS security
 **Status:** ✅ Completed
 
 #### What was done:
-- ✅ Next.js 15 with App Router and TypeScript
-- ✅ TailwindCSS v4 with custom restaurant theme (warm pizza colors)
-- ✅ Navbar with Home/Menu navigation links
-- ✅ Footer with restaurant info & quick links
-- ✅ SEO metadata for Joe's Pizza GTA
-- ✅ Installed all Phase 1 dependencies:
-  - @supabase/supabase-js (database)
-  - stripe & @stripe/stripe-js (payments)
-  - @stripe/react-stripe-js (payment forms)
-  - lucide-react (icons)
-- ✅ Environment variables configured (.env.local with Stripe test keys)
+- ✅ Created 4 database tables:
+  - `restaurants` - Store restaurant info (hardcoded Joe's Pizza GTA, id=1)
+  - `categories` - Menu categories (Appetizers, Pizzas)
+  - `menu_items` - Individual menu items with prices & images
+  - `orders` - Customer orders with items, totals, and statuses
+- ✅ Seeded sample data:
+  - 2 categories (Appetizers, Pizzas)
+  - 6 menu items with Unsplash images and prices
+- ✅ Enabled Row Level Security (RLS):
+  - Public read access to menu (restaurants, categories, menu_items)
+  - Public can create/read orders (restricted to restaurant_id=1)
+  - Authenticated users can update/delete orders
+- ✅ Created `lib/supabase.ts` with:
+  - Client-side Supabase client (browser)
+  - Server-side Supabase client (API routes & server components)
+  - Type definitions (Restaurant, Category, MenuItem, Order)
+  - Utility functions for common queries:
+    - `getRestaurant()` - Fetch restaurant info
+    - `getMenu()` - Fetch menu with categories and items
+    - `createOrder()` - Create new order
+    - `getOrder()` - Fetch order by ID
+    - `updateOrderStatus()` - Update order (server-side)
+- ✅ Tested database connection locally
 
 #### Files created/modified:
-- `app/layout.tsx` - Main layout with navbar & footer
-- `tailwind.config.ts` - Restaurant theme configuration
-- `.env.local` - Stripe test API keys (already configured)
+- `lib/supabase.ts` - Supabase client utilities and type definitions
+- Database schema created in Supabase console (not in code)
 
 ## Getting Started
 
@@ -37,13 +56,7 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ## Upcoming Phases
 
-### Phase 2: Supabase Setup & Database Schema (Next)
-- Create Supabase project (free tier)
-- Setup database schema: restaurants, categories, menu_items, orders
-- Enable Row Level Security (RLS)
-- Seed sample menu data
-
-### Phase 3: SEO-Optimized Menu Page
+### Phase 3: SEO-Optimized Menu Page (Next)
 - Server-rendered menu with categories
 - Mobile-first UI with Next/Image
 - Shopping cart context
@@ -83,6 +96,9 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 Configured in `.env.local`:
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` - Stripe public key (exposed to client)
 - `STRIPE_SECRET_KEY` - Stripe secret key (server-side only)
+- `NEXT_PUBLIC_SUPABASE_URL` - Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` - Supabase public key (exposed to client)
+- `SUPABASE_SECRET_KEY` - Supabase secret key (server-side only)
 
 ## Deploy
 
