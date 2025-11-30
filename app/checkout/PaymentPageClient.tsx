@@ -114,24 +114,18 @@ export default function PaymentPageClient({
             </div>
           )}
 
-          {deliveryMethod === 'delivery' && (
+          {trackingUrl && deliveryMethod === 'delivery' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-600 mb-2">Track Your Delivery</p>
-              {trackingUrl ? (
-                <a
-                  href={trackingUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-semibold"
-                >
-                  📍 View on DoorDash
-                  <span className="text-lg">→</span>
-                </a>
-              ) : (
-                <p className="text-sm text-gray-600">
-                  Your DoorDash delivery has been created. Check your email for tracking link.
-                </p>
-              )}
+              <a
+                href={trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-semibold"
+              >
+                📍 View on DoorDash
+                <span className="text-lg">→</span>
+              </a>
             </div>
           )}
 
