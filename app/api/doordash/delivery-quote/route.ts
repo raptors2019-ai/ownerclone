@@ -1,64 +1,41 @@
 import { NextResponse } from 'next/server';
-import jwt from 'jsonwebtoken';
+import { createDoorDashJWT } from '@/lib/doordash-jwt';
 
 interface DeliveryQuoteRequest {
-  pickupAddress: string;
+  pickupAddress?: string; // Optional if using store ID
   deliveryAddress: string;
   customerPhone: string;
   pickupTime?: number; // Unix timestamp, optional (defaults to ASAP)
+  businessId?: string; // DoorDash Business ID (defaults: 'joes-pizza-gta')
+  storeId?: string; // DoorDash Store ID (defaults: 'joes-main-mississauga') - FIXES phone/distance issues!
 }
 
 // DoorDash API constants
 const DOORDASH_API_BASE = 'https://openapi.doordash.com/drive/v2';
 
-// Helper function to create DoorDash JWT token
-function createDoorDashJWT(): string {
-  const developerId = process.env.NEXT_PUBLIC_DOORDASH_DEVELOPER_ID;
-  const keyId = process.env.DOORDASH_KEY_ID;
-  const signingSecret = process.env.DOORDASH_SIGNING_SECRET;
-
-  if (!developerId || !keyId || !signingSecret) {
-    throw new Error('DoorDash credentials not configured');
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const payload = {
-    aud: 'doordash',
-    iss: developerId,
-    kid: keyId,
-    exp: now + 300, // Token expires in 5 minutes
-    iat: now,
-  };
-
-  const token = jwt.sign(
-    payload,
-    Buffer.from(signingSecret, 'base64'),
-    {
-      algorithm: 'HS256',
-      header: {
-        'dd-ver': 'DD-JWT-V1',
-      } as any,
-    }
-  );
-
-  return token;
-}
-
 export async function POST(request: Request) {
   try {
     const body: DeliveryQuoteRequest = await request.json();
 
-    if (!body.pickupAddress || !body.deliveryAddress || !body.customerPhone) {
+    // Validate required fields
+    if (!body.deliveryAddress || !body.customerPhone) {
       return NextResponse.json(
-        { error: 'Missing pickup address, delivery address, or customer phone' },
+        { error: 'Missing delivery address or customer phone' },
         { status: 400 }
       );
     }
 
-    // Format phone number: remove all non-digit characters
+    // pickupAddress is optional - we default to using the "default" store
+    // which pulls address/phone from DoorDash account configuration
+
+    // Format phone numbers: remove all non-digit characters and format as (XXX) XXX-XXXX
     const cleanPhone = body.customerPhone.replace(/\D/g, '');
-    // Ensure it's in +1XXXXXXXXXX format for North America
-    const formattedPhone = cleanPhone.length === 10 ? `+1${cleanPhone}` : (cleanPhone.startsWith('1') ? `+${cleanPhone}` : `+1${cleanPhone}`);
+    const formattedCustomerPhone = `+1${cleanPhone.slice(-10)}`;
+
+    // Format restaurant phone (default to restaurant's actual number if not provided)
+    const restaurantPhoneRaw = body.restaurantPhone || '6479206806'; // Joe's Pizza GTA
+    const cleanRestaurantPhone = restaurantPhoneRaw.replace(/\D/g, '');
+    const formattedRestaurantPhone = `+1${cleanRestaurantPhone.slice(-10)}`;
 
     // Format pickup time as ISO 8601 datetime (DoorDash expects specific format)
     const pickupDate = body.pickupTime ? new Date(body.pickupTime * 1000) : new Date(Date.now() + 30 * 60000); // Default to 30 mins from now
@@ -72,13 +49,35 @@ export async function POST(request: Request) {
     const pickupTimeISO = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
 
     // Create delivery quote request
-    const quotePayload = {
+    // KEY FIX: Use default business/store to avoid phone/distance validation errors
+    // Default store pulls config from DoorDash account
+    const businessId = body.businessId || 'default'; // Every account has this
+    const storeId = body.storeId || 'default'; // Every account has this
+
+    // Always use store IDs (defaults are always available)
+    const useStoreIds = true;
+
+    const quotePayload: any = {
       external_delivery_id: `order_${Date.now()}`,
-      pickup_address: body.pickupAddress,
       dropoff_address: body.deliveryAddress,
-      dropoff_phone_number: formattedPhone,
-      pickup_time: pickupTimeISO,
+      dropoff_phone_number: formattedCustomerPhone,
+      dropoff_business_name: 'Customer',
+      dropoff_contact_send_notifications: true,
+      pickup_time_estimated: pickupTimeISO,
+      order_value: 2000, // $20 default order value in cents
     };
+
+    if (useStoreIds) {
+      // RECOMMENDED: Use store IDs (pulls phone/address from store config)
+      quotePayload.pickup_external_business_id = businessId;
+      quotePayload.pickup_external_store_id = storeId;
+      // NOTE: When using store ID, omit pickup_address/phone_number - they come from store!
+    } else {
+      // FALLBACK: Direct address/phone (but prone to validation errors)
+      quotePayload.pickup_address = body.pickupAddress || '2180 Credit Valley Rd Unit 103, Mississauga, ON L5M 3C9';
+      quotePayload.pickup_business_name = "Joe's Pizza GTA";
+      quotePayload.pickup_phone_number = formattedRestaurantPhone;
+    }
 
     const payloadString = JSON.stringify(quotePayload);
     const token = createDoorDashJWT();

@@ -156,11 +156,11 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
     setDeliveryError('');
 
     try {
-      const response = await fetch('/api/doordash/delivery-quote', {
+      const response = await fetch('/api/doordash/quote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          pickupAddress: '2180 Credit Valley Rd Unit 103, Mississauga, ON L5M 3C9', // Joe's Pizza address
+          pickupAddress: '1000 4th Ave, Seattle, WA, 98104', // US test address (Seattle)
           deliveryAddress: address,
           customerPhone: phone,
         }),
@@ -170,28 +170,27 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
       if (!response.ok) {
         setDeliveryError(data.error || 'Failed to get delivery quote');
-        setDeliveryFee(5.99); // Fallback to default
+        setDeliveryFee(0);
         setEstimatedDeliveryTime('');
         return;
       }
 
-      setDeliveryFee(data.fee || 5.99);
-
-      // Format delivery time
-      if (data.estimatedDeliveryTime) {
-        const deliveryDate = new Date(data.estimatedDeliveryTime * 1000);
-        const timeString = deliveryDate.toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-        setEstimatedDeliveryTime(timeString);
+      // Check if delivery is available (within 100km)
+      if (!data.available) {
+        setDeliveryError(data.message || 'Delivery not available for this address');
+        setDeliveryFee(0);
+        setEstimatedDeliveryTime('');
+        return;
       }
 
+      // Delivery is available - set fee and time
+      setDeliveryFee(data.fee || 0);
+      setEstimatedDeliveryTime(data.estimatedDeliveryTime || '');
       setDeliveryError('');
     } catch (error) {
       console.error('Error getting delivery quote:', error);
-      setDeliveryError('Could not calculate delivery fee. Using default fee.');
-      setDeliveryFee(5.99);
+      setDeliveryError('Could not calculate delivery distance. Please try a different address.');
+      setDeliveryFee(0);
       setEstimatedDeliveryTime('');
     } finally {
       setIsLoadingDeliveryQuote(false);

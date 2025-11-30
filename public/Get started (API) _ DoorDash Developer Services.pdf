@@ -1,0 +1,169 @@
+Prerequisites
+Before getting started, ensure you have created and saved an access key from the Developer Portal.
+
+To continue, you will need: developer_id, key_id and signing_secret
+
+Install a JWT library
+Most programming languages provide support for creating JSON Web Tokens (JWTs) either directly in the language or as a package. Select your language and then follow the instructions to install the package, if needed.
+
+Node.js
+Python
+PHP
+Java
+Kotlin
+C#
+Open a terminal and navigate to your project directory, then run:
+
+npm install jsonwebtoken
+
+Generate a JWT
+JWTs are created using an access key. Use these code snippets to generate a correctly-formatted JWT from your access key.
+
+Node.js
+Python
+PHP
+Java
+Kotlin
+C#
+Copy the code snippet below into your project file. Replace PASTE_YOUR_ACCESS_KEY_HERE with your access key.
+
+const jwt = require('jsonwebtoken')
+
+const accessKey = PASTE_YOUR_ACCESS_KEY_HERE
+
+const data = {
+  aud: 'doordash',
+  iss: accessKey.developer_id,
+  kid: accessKey.key_id,
+  exp: Math.floor(Date.now() / 1000 + 300),
+  iat: Math.floor(Date.now() / 1000),
+}
+
+const headers = { algorithm: 'HS256', header: { 'dd-ver': 'DD-JWT-V1' } }
+
+const token = jwt.sign(
+  data,
+  Buffer.from(accessKey.signing_secret, 'base64'),
+  headers,
+)
+
+console.log(token)
+
+Then, test your code. In your terminal, run:
+
+node app.js
+
+If you were successful, you should see output like this:
+
+A screenshot of a terminal showing a successful run of the program
+Create a delivery
+Now that you have a JWT, you can create a delivery by making a request to the Drive API.
+
+tip
+When you created your access key, you created it for the Sandbox environment (until you request production access, you can only create access keys for the Sandbox environment). Because you're using an access key for the Sandbox environment, you can experiment with the API as much as you like without incurring real costs or hailing real Dashers.
+
+Node.js
+Python
+PHP
+Kotlin
+C#
+First, install the axios npm package.
+
+npm install axios
+
+Then, copy the snippet below into app.js, at the end of the file.
+
+const axios = require('axios')
+
+const body = JSON.stringify({
+  external_delivery_id: 'D-12345',
+  pickup_address: '901 Market Street 6th Floor San Francisco, CA 94103',
+  pickup_business_name: 'Wells Fargo SF Downtown',
+  pickup_phone_number: '+16505555555',
+  pickup_instructions: 'Enter gate code 1234 on the callbox.',
+  dropoff_address: '901 Market Street 6th Floor San Francisco, CA 94103',
+  dropoff_business_name: 'Wells Fargo SF Downtown',
+  dropoff_phone_number: '+16505555555',
+  dropoff_instructions: 'Enter gate code 1234 on the callbox.',
+  order_value: 1999,
+})
+
+axios
+  .post('https://openapi.doordash.com/drive/v2/deliveries', body, {
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(function (response) {
+    console.log(response.data)
+  })
+  .catch(function (error) {
+    console.log(error)
+  })
+
+Test your code. In your terminal, run:
+
+node app.js
+
+If you were successful, you should see output like this:
+
+A screenshot of a terminal showing the output of creating a delivery
+Use the Delivery Simulator
+You can use the Delivery Simulator to advance your delivery through the stages of the delivery process, from creation to Dasher assignment to pickup to delivery.
+
+In the Developer Portal left navigation, click Simulator.
+
+A screenshot of the Developer Portal left navigation menu with the Simulator navigation item highlighted
+Find the delivery you created by looking for the identifier #D-12345. Click Advance to Next Step to move your delivery to the Delivery Confirmed stage.
+
+A screenshot of the Delivery Simulator with a delivery in the Delivery Created stage
+Get the status of your delivery
+You can always get the latest status of a delivery by making a request to the Drive API.
+
+Node.js
+Python
+PHP
+Kotlin
+C#
+First, delete or comment out the request to create a delivery. If you don't, your code will try to create another delivery and run into a conflict.
+
+// axios
+//   .post('https://openapi.doordash.com/drive/v2/deliveries', body, {
+//     headers: {
+//       Authorization: 'Bearer ' + token,
+//       'Content-Type': 'application/json',
+//     },
+//   })
+//   .then(function (response) {
+//     console.log(response.data)
+//   })
+//   .catch(function (error) {
+//     console.log(error)
+//   })
+
+Copy the snippet below into app.js at the end of the file.
+
+axios
+  .get('https://openapi.doordash.com/drive/v2/deliveries/D-12345', {
+    headers: {
+      Authorization: 'Bearer ' + token,
+      'Content-Type': 'application/json',
+    },
+  })
+  .then(function (response) {
+    console.log(response.data)
+  })
+  .catch(function (error) {
+    console.log(error)
+  })
+
+Then, test your code. In your terminal, run:
+
+node app.js
+
+If you were successful, you should see output like this. Notice that the delivery_status is enroute_to_pickup.
+
+A screenshot of a terminal showing the output of getting delivery status
+Finish up
+If you'd like, continue to use the Delivery Simulator to advance your delivery through the stages of the delivery process and then re-run your app to see how the delivery details change.
