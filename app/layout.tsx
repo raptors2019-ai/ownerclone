@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { CartProvider } from "@/lib/CartContext";
+import CartIcon from "@/app/components/CartIcon";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,33 +30,34 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-amber-50 text-gray-900`}
       >
-        {/* Navbar */}
-        <nav className="sticky top-0 z-50 bg-linear-to-r from-orange-600 to-amber-600 shadow-lg">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Link href="/" className="font-bold text-white text-2xl">
-                🍕 Joe's Pizza
-              </Link>
-              <div className="flex gap-6">
-                <Link
-                  href="/"
-                  className="text-white hover:text-amber-100 transition"
-                >
-                  Home
+        <CartProvider>
+          {/* Navbar */}
+          <nav className="sticky top-0 z-50 bg-linear-to-r from-orange-600 to-amber-600 shadow-lg">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex justify-between items-center h-16">
+                <Link href="/" className="font-bold text-white text-2xl">
+                  🍕 Joe's Pizza
                 </Link>
-                <Link
-                  href="/menu"
-                  className="text-white hover:text-amber-100 transition"
-                >
-                  Menu
-                </Link>
+                <div className="flex gap-6 items-center">
+                  <Link
+                    href="/"
+                    className="text-white hover:text-amber-100 transition"
+                  >
+                    Home
+                  </Link>
+                  <Link
+                    href="/menu"
+                    className="text-white hover:text-amber-100 transition"
+                  >
+                    Menu
+                  </Link>
+                  <CartIcon />
+                </div>
               </div>
             </div>
-          </div>
-        </nav>
+          </nav>
 
-        {/* Main Content */}
-        <CartProvider>
+          {/* Main Content */}
           <main className="min-h-screen">{children}</main>
         </CartProvider>
 
