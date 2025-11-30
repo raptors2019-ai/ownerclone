@@ -8,22 +8,7 @@ import { MenuItem } from '@/lib/supabase';
 import AddressInput from '@/app/components/AddressInput';
 import { Trash2, ArrowLeft, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const STORAGE_KEY = 'joe_pizza_customer_info';
-
-interface CustomerInfo {
-  name: string;
-  phone: string;
-  address: string;
-}
-
 type DeliveryMethod = 'pickup' | 'delivery';
-
-interface DeliveryQuote {
-  fee: number;
-  estimatedDeliveryTime: number;
-  estimatedPickupTime: number;
-  deliveryId: string;
-}
 
 interface CheckoutClientProps {
   menuItems: MenuItem[];
@@ -72,26 +57,6 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
   const displayItems = getCarouselDisplayItems();
 
-  // Load saved customer info on component mount
-  useEffect(() => {
-    const savedInfo = localStorage.getItem(STORAGE_KEY);
-    if (savedInfo) {
-      try {
-        const parsed: CustomerInfo = JSON.parse(savedInfo);
-        setCustomerName(parsed.name || '');
-        setCustomerPhone(parsed.phone || '');
-        setCustomerAddress(parsed.address || '');
-
-        // If delivery method is selected and we have address, calculate delivery fee
-        if (deliveryMethod === 'delivery' && parsed.address && parsed.phone) {
-          getDeliveryQuote(parsed.address, parsed.phone);
-        }
-      } catch (error) {
-        console.error('Error loading saved customer info:', error);
-      }
-    }
-  }, [deliveryMethod]);
-
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -123,14 +88,6 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
     setIsProcessing(true);
 
     try {
-      // Save customer info to localStorage for next time
-      const customerInfo: CustomerInfo = {
-        name: customerName,
-        phone: customerPhone,
-        address: customerAddress,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(customerInfo));
-
       // Calculate tax
       const taxAmount = (total + deliveryFee) * 0.13;
 
@@ -183,15 +140,6 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       alert(error instanceof Error ? error.message : 'An error occurred during checkout');
       setIsProcessing(false);
     }
-  };
-
-  // Clear saved customer info
-  const clearSavedInfo = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setCustomerName('');
-    setCustomerPhone('');
-    setCustomerAddress('');
-    alert('Saved information cleared');
   };
 
   // Get delivery quote from DoorDash API
@@ -549,14 +497,6 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
               className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
             >
               {isProcessing ? '⏳ Processing...' : '💳 Proceed to Payment'}
-            </button>
-
-            <button
-              type="button"
-              onClick={clearSavedInfo}
-              className="w-full mt-3 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-6 rounded-xl font-semibold text-sm transition"
-            >
-              🗑️ Clear Saved Information
             </button>
           </form>
         </div>
