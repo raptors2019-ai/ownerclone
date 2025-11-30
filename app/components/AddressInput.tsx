@@ -44,7 +44,8 @@ export default function AddressInput({
           const autocomplete = new window.google.maps.places.Autocomplete(
             inputRef.current,
             {
-              componentRestrictions: { country: 'ca' },
+              // Allow both US and Canadian addresses for testing
+              componentRestrictions: { country: ['us', 'ca'] },
               fields: ['formatted_address', 'address_components'],
               types: ['address'],
             }
