@@ -56,7 +56,10 @@ export default function AddressInput({
           autocomplete.addListener('place_changed', () => {
             const place = autocomplete.getPlace();
             if (place?.formatted_address) {
+              console.log('📍 Google place selected:', place.formatted_address);
               onChange(place.formatted_address);
+            } else {
+              console.warn('⚠️ Place selected but no formatted_address found');
             }
           });
 

@@ -213,9 +213,13 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
   // Handle address change with debounce for DoorDash API calls
   const handleAddressChange = (address: string) => {
+    console.log('Address changed:', { address, deliveryMethod, phoneLength: customerPhone.length });
     setCustomerAddress(address);
     if (deliveryMethod === 'delivery' && address.length > 10) {
+      console.log('Triggering delivery quote for:', address);
       getDeliveryQuote(address, customerPhone);
+    } else if (deliveryMethod === 'delivery' && address.length <= 10) {
+      console.warn('Address too short for quote:', address);
     }
   };
 
