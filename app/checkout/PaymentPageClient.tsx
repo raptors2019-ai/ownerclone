@@ -34,6 +34,8 @@ export default function PaymentPageClient({
   const [deliveryError, setDeliveryError] = useState<string>('');
   const [orderConfirmed, setOrderConfirmed] = useState(false);
   const [trackingUrl, setTrackingUrl] = useState<string>('');
+  const [deliveryId, setDeliveryId] = useState<string>('');
+  const [deliveryStatus, setDeliveryStatus] = useState<string>('');
 
   const taxAmount = (subtotal + deliveryFee) * 0.13;
   const finalTotal = subtotal + deliveryFee + taxAmount;
@@ -70,9 +72,15 @@ export default function PaymentPageClient({
           // User can still see their order confirmation
         } else {
           console.log('✅ DoorDash delivery created:', deliveryData);
-          // Store tracking URL if available
+          // Store delivery ID and tracking URL
+          if (deliveryData.deliveryId) {
+            setDeliveryId(deliveryData.deliveryId);
+          }
           if (deliveryData.trackingUrl) {
             setTrackingUrl(deliveryData.trackingUrl);
+          }
+          if (deliveryData.status) {
+            setDeliveryStatus(deliveryData.status);
           }
         }
       } catch (error) {
@@ -114,18 +122,34 @@ export default function PaymentPageClient({
             </div>
           )}
 
-          {trackingUrl && deliveryMethod === 'delivery' && (
+          {deliveryMethod === 'delivery' && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <p className="text-sm text-gray-600 mb-2">Track Your Delivery</p>
-              <a
-                href={trackingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-semibold"
-              >
-                📍 View on DoorDash
-                <span className="text-lg">→</span>
-              </a>
+              <p className="text-sm text-gray-600 mb-3">📦 Delivery Status</p>
+
+              {deliveryStatus && (
+                <div className="mb-4 p-3 bg-white rounded border border-blue-200">
+                  <p className="text-xs text-gray-600 font-semibold mb-1">Current Status</p>
+                  <p className="text-base font-bold text-blue-600 capitalize">
+                    {deliveryStatus.replace(/_/g, ' ')}
+                  </p>
+                </div>
+              )}
+
+              {trackingUrl ? (
+                <a
+                  href={trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-semibold w-full justify-center"
+                >
+                  📍 View Live Tracking
+                  <span className="text-lg">→</span>
+                </a>
+              ) : (
+                <p className="text-sm text-gray-600">
+                  Your DoorDash delivery has been created. Tracking link coming soon...
+                </p>
+              )}
             </div>
           )}
 
