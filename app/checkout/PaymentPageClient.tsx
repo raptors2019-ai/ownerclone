@@ -33,6 +33,7 @@ export default function PaymentPageClient({
   const [isCreatingDelivery, setIsCreatingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState<string>('');
   const [orderConfirmed, setOrderConfirmed] = useState(false);
+  const [trackingUrl, setTrackingUrl] = useState<string>('');
 
   const taxAmount = (subtotal + deliveryFee) * 0.13;
   const finalTotal = subtotal + deliveryFee + taxAmount;
@@ -69,6 +70,10 @@ export default function PaymentPageClient({
           // User can still see their order confirmation
         } else {
           console.log('✅ DoorDash delivery created:', deliveryData);
+          // Store tracking URL if available
+          if (deliveryData.trackingUrl) {
+            setTrackingUrl(deliveryData.trackingUrl);
+          }
         }
       } catch (error) {
         console.error('Error creating delivery:', error);
@@ -106,6 +111,21 @@ export default function PaymentPageClient({
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
               <p className="text-sm text-gray-600">Estimated Delivery Time</p>
               <p className="text-2xl font-bold text-green-600">{estimatedDeliveryTime}</p>
+            </div>
+          )}
+
+          {trackingUrl && deliveryMethod === 'delivery' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-gray-600 mb-2">Track Your Delivery</p>
+              <a
+                href={trackingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition text-sm font-semibold"
+              >
+                📍 View on DoorDash
+                <span className="text-lg">→</span>
+              </a>
             </div>
           )}
 
