@@ -57,7 +57,7 @@ export default function PaymentPageClient({
             pickupBusinessName: "Joe's Pizza GTA",
             deliveryBusinessName: customerName,
             externalDeliveryId: `order_${stripePaymentIntentId}`,
-            orderValue: Math.round(total * 100), // in cents
+            orderValue: Math.round(subtotal * 100), // in cents
           }),
         });
 
