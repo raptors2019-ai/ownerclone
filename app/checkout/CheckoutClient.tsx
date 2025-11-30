@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/lib/CartContext';
+import { MenuItem } from '@/lib/supabase';
 import AddressInput from '@/app/components/AddressInput';
-import { Trash2, ArrowLeft } from 'lucide-react';
+import { Trash2, ArrowLeft, Plus, Minus, ShoppingCart, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const STORAGE_KEY = 'joe_pizza_customer_info';
 
@@ -15,12 +16,61 @@ interface CustomerInfo {
   address: string;
 }
 
-export default function CheckoutClient() {
-  const { items, removeItem, total, clearCart } = useCart();
+type DeliveryMethod = 'pickup' | 'delivery';
+
+interface DeliveryQuote {
+  fee: number;
+  estimatedDeliveryTime: number;
+  estimatedPickupTime: number;
+  deliveryId: string;
+}
+
+interface CheckoutClientProps {
+  menuItems: MenuItem[];
+}
+
+export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) {
+  const { items, removeItem, total, clearCart, addItem } = useCart();
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('pickup');
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [estimatedDeliveryTime, setEstimatedDeliveryTime] = useState<string>('');
+  const [isLoadingDeliveryQuote, setIsLoadingDeliveryQuote] = useState(false);
+  const [deliveryError, setDeliveryError] = useState<string>('');
+  const [carouselQuantities, setCarouselQuantities] = useState<{ [key: number]: number }>({});
+  const [addedFeedback, setAddedFeedback] = useState<number | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  const ITEMS_PER_SLIDE = 3;
+  const carouselItems = menuItems.length > 0 ? menuItems : [];
+  const totalItems = carouselItems.length;
+
+  const handleCarouselPrev = () => {
+    setCarouselIndex((prevIndex) => {
+      return (prevIndex - 1 + totalItems) % totalItems;
+    });
+  };
+
+  const handleCarouselNext = () => {
+    setCarouselIndex((prevIndex) => {
+      return (prevIndex + 1) % totalItems;
+    });
+  };
+
+  // Get carousel items with wrapping using modulo
+  const getCarouselDisplayItems = () => {
+    if (totalItems === 0) return [];
+    const items = [];
+    for (let i = 0; i < ITEMS_PER_SLIDE; i++) {
+      items.push(carouselItems[(carouselIndex + i) % totalItems]);
+    }
+    return items;
+  };
+
+  const displayItems = getCarouselDisplayItems();
 
   // Load saved customer info on component mount
   useEffect(() => {
@@ -40,8 +90,13 @@ export default function CheckoutClient() {
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!customerName || !customerPhone || !customerAddress) {
-      alert('Please fill in all fields');
+    if (!customerName || !customerPhone) {
+      alert('Please fill in name and phone number');
+      return;
+    }
+
+    if (deliveryMethod === 'delivery' && !customerAddress) {
+      alert('Please enter a delivery address');
       return;
     }
 
@@ -88,17 +143,215 @@ export default function CheckoutClient() {
     alert('Saved information cleared');
   };
 
+  // Get delivery quote from DoorDash API
+  const getDeliveryQuote = async (address: string, phone: string) => {
+    if (!address || !phone) {
+      setDeliveryError('');
+      setDeliveryFee(0);
+      setEstimatedDeliveryTime('');
+      return;
+    }
+
+    setIsLoadingDeliveryQuote(true);
+    setDeliveryError('');
+
+    try {
+      const response = await fetch('/api/doordash/delivery-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pickupAddress: '2180 Credit Valley Rd Unit 103, Mississauga, ON L5M 3C9', // Joe's Pizza address
+          deliveryAddress: address,
+          customerPhone: phone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setDeliveryError(data.error || 'Failed to get delivery quote');
+        setDeliveryFee(5.99); // Fallback to default
+        setEstimatedDeliveryTime('');
+        return;
+      }
+
+      setDeliveryFee(data.fee || 5.99);
+
+      // Format delivery time
+      if (data.estimatedDeliveryTime) {
+        const deliveryDate = new Date(data.estimatedDeliveryTime * 1000);
+        const timeString = deliveryDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        setEstimatedDeliveryTime(timeString);
+      }
+
+      setDeliveryError('');
+    } catch (error) {
+      console.error('Error getting delivery quote:', error);
+      setDeliveryError('Could not calculate delivery fee. Using default fee.');
+      setDeliveryFee(5.99);
+      setEstimatedDeliveryTime('');
+    } finally {
+      setIsLoadingDeliveryQuote(false);
+    }
+  };
+
+  // Handle delivery method change
+  const handleDeliveryMethodChange = (method: DeliveryMethod) => {
+    setDeliveryMethod(method);
+    if (method === 'pickup') {
+      setDeliveryFee(0);
+      setEstimatedDeliveryTime('');
+      setDeliveryError('');
+      setCustomerAddress('');
+    } else {
+      // Address field will be shown, wait for user input
+      setDeliveryFee(0);
+      setEstimatedDeliveryTime('');
+    }
+  };
+
+  // Handle address change with debounce for DoorDash API calls
+  const handleAddressChange = (address: string) => {
+    setCustomerAddress(address);
+    if (deliveryMethod === 'delivery' && address.length > 10) {
+      getDeliveryQuote(address, customerPhone);
+    }
+  };
+
+  // Handle carousel quantity change
+  const handleCarouselQuantityChange = (itemId: number, delta: number) => {
+    const current = carouselQuantities[itemId] || 1;
+    const newQuantity = Math.max(1, current + delta);
+    setCarouselQuantities({ ...carouselQuantities, [itemId]: newQuantity });
+  };
+
+  // Handle add to cart from carousel
+  const handleCarouselAddToCart = (item: MenuItem) => {
+    const quantity = carouselQuantities[item.id] || 1;
+    addItem(item, quantity);
+    setCarouselQuantities({ ...carouselQuantities, [item.id]: 0 });
+    setAddedFeedback(item.id);
+    setTimeout(() => setAddedFeedback(null), 2000);
+  };
+
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-8 text-center">
-        <p className="text-lg text-gray-600 mb-6">Your cart is empty</p>
-        <Link
-          href="/menu"
-          className="inline-flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
-        >
-          <ArrowLeft size={20} />
-          Back to Menu
-        </Link>
+      <div className="space-y-8">
+        <div className="bg-white rounded-lg shadow-md p-8 text-center">
+          <p className="text-lg text-gray-600 mb-6">Your cart is empty</p>
+          <Link
+            href="/menu"
+            className="inline-flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
+          >
+            <ArrowLeft size={20} />
+            Back to Menu
+          </Link>
+        </div>
+
+        {/* Products Carousel */}
+        {carouselItems.length > 0 && (
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <h3 className="text-2xl font-bold text-gray-900 mb-6">Check out some delicious items!</h3>
+            <div className="flex items-center gap-4">
+              {/* Previous Button */}
+              <button
+                onClick={handleCarouselPrev}
+                className="shrink-0 p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition"
+              >
+                <ChevronLeft size={24} />
+              </button>
+
+              {/* Carousel Items Container */}
+              <div className="flex-1 overflow-hidden">
+                <div className="flex gap-6">
+                  {displayItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="shrink-0 w-1/3 border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition"
+                    >
+                      {/* Item Image */}
+                      <div className="relative h-40 w-full bg-gray-200">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 100vw, 33vw"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-orange-200 to-amber-200">
+                            <span className="text-4xl">🍕</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Item Details */}
+                      <div className="p-4">
+                        <h4 className="font-bold text-gray-900 line-clamp-2">{item.name}</h4>
+                        {item.description && (
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">{item.description}</p>
+                        )}
+
+                        {/* Price */}
+                        <div className="mt-3 text-lg font-bold text-orange-600">
+                          ${item.price.toFixed(2)}
+                        </div>
+
+                        {/* Quantity Selector & Add to Cart */}
+                        <div className="mt-3 flex items-center gap-2">
+                          <div className="flex items-center border-2 border-orange-500 rounded-lg overflow-hidden bg-white">
+                            <button
+                              onClick={() => handleCarouselQuantityChange(item.id, -1)}
+                              disabled={(carouselQuantities[item.id] || 1) <= 1}
+                              className="p-1 bg-white hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed transition text-orange-600"
+                            >
+                              <Minus size={16} />
+                            </button>
+
+                            <span className="flex-1 text-center font-bold text-sm text-gray-900 px-2 py-1 min-w-8">
+                              {carouselQuantities[item.id] || 1}
+                            </span>
+
+                            <button
+                              onClick={() => handleCarouselQuantityChange(item.id, 1)}
+                              className="p-1 bg-white hover:bg-orange-50 transition text-orange-600"
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+
+                          <button
+                            onClick={() => handleCarouselAddToCart(item)}
+                            className={`flex-1 py-1 px-2 rounded-lg font-semibold transition flex items-center justify-center gap-1 text-sm ${
+                              addedFeedback === item.id
+                                ? 'bg-green-500 text-white'
+                                : 'bg-orange-500 text-white hover:bg-orange-600'
+                            }`}
+                          >
+                            <ShoppingCart size={14} />
+                            {addedFeedback === item.id ? 'Added!' : 'Add'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={handleCarouselNext}
+                className="shrink-0 p-2 rounded-lg bg-orange-100 text-orange-600 hover:bg-orange-200 transition"
+              >
+                <ChevronRight size={24} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -158,6 +411,35 @@ export default function CheckoutClient() {
           <h2 className="text-3xl font-bold text-orange-700 mb-8">📋 Delivery Information</h2>
           <p className="text-gray-600 mb-8">Please provide your details below</p>
 
+          {/* Delivery Method Selection */}
+          <div className="mb-8 p-6 bg-amber-50 rounded-xl border-2 border-orange-300">
+            <h3 className="text-lg font-bold text-orange-700 mb-4">🚗 How would you like your order?</h3>
+            <div className="flex gap-4">
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="deliveryMethod"
+                  value="pickup"
+                  checked={deliveryMethod === 'pickup'}
+                  onChange={() => handleDeliveryMethodChange('pickup')}
+                  className="w-5 h-5 text-orange-500 cursor-pointer"
+                />
+                <span className="ml-3 text-lg font-semibold text-gray-900">🏪 Pickup</span>
+              </label>
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="radio"
+                  name="deliveryMethod"
+                  value="delivery"
+                  checked={deliveryMethod === 'delivery'}
+                  onChange={() => handleDeliveryMethodChange('delivery')}
+                  className="w-5 h-5 text-orange-500 cursor-pointer"
+                />
+                <span className="ml-3 text-lg font-semibold text-gray-900">🚚 Delivery</span>
+              </label>
+            </div>
+          </div>
+
           <form onSubmit={handleCheckout} className="space-y-8">
             {/* Full Name */}
             <div>
@@ -189,19 +471,27 @@ export default function CheckoutClient() {
               />
             </div>
 
-            {/* Delivery Address */}
-            <div>
-              <label className="block text-lg font-bold text-orange-700 mb-2">
-                📍 Delivery Address *
-              </label>
-              <div className="bg-amber-50 border-3 border-orange-300 rounded-xl p-1 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-500 transition">
-                <AddressInput
-                  value={customerAddress}
-                  onChange={setCustomerAddress}
-                  placeholder="123 Main St, Apt 4B, Mississauga, ON L5A 1A1"
-                />
+            {/* Delivery Address - Only show for delivery */}
+            {deliveryMethod === 'delivery' && (
+              <div>
+                <label className="block text-lg font-bold text-orange-700 mb-2">
+                  📍 Delivery Address *
+                </label>
+                <div className="bg-amber-50 border-3 border-orange-300 rounded-xl p-1 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-500 transition">
+                  <AddressInput
+                    value={customerAddress}
+                    onChange={handleAddressChange}
+                    placeholder="123 Main St, Apt 4B, Mississauga, ON L5A 1A1"
+                  />
+                </div>
+                {isLoadingDeliveryQuote && (
+                  <p className="mt-2 text-sm text-blue-600 font-medium">⏳ Calculating delivery fee...</p>
+                )}
+                {deliveryError && (
+                  <p className="mt-2 text-sm text-orange-600">{deliveryError}</p>
+                )}
               </div>
-            </div>
+            )}
 
             <button
               type="submit"
@@ -225,20 +515,43 @@ export default function CheckoutClient() {
       {/* Cart Total Sidebar */}
       <div>
         <div className="bg-white rounded-lg shadow-md p-6 sticky top-20">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Total</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {deliveryMethod === 'delivery' ? '🚚 Delivery Order' : '🏪 Pickup Order'}
+          </h2>
+
+          {deliveryMethod === 'delivery' && estimatedDeliveryTime && (
+            <div className="mb-4 p-3 bg-green-50 border-l-4 border-green-500 rounded">
+              <p className="text-sm text-green-800 font-semibold">
+                ⏱️ Estimated Delivery: <span className="text-base">{estimatedDeliveryTime}</span>
+              </p>
+            </div>
+          )}
 
           <div className="space-y-2 mb-6">
             <div className="flex justify-between text-gray-600">
               <span>Subtotal</span>
               <span>${total.toFixed(2)}</span>
             </div>
+
+            {deliveryMethod === 'delivery' && (
+              <>
+                <div className="flex justify-between text-orange-600 font-semibold">
+                  <span>Delivery Fee</span>
+                  <span>
+                    {isLoadingDeliveryQuote ? '⏳ Calculating...' : `$${deliveryFee.toFixed(2)}`}
+                  </span>
+                </div>
+                {isLoadingDeliveryQuote && (
+                  <div className="flex justify-center py-2">
+                    <div className="animate-spin h-4 w-4 border-2 border-orange-500 border-t-transparent rounded-full"></div>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="flex justify-between text-gray-600">
-              <span>Delivery Fee</span>
-              <span>$0.00</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Tax</span>
-              <span>${(total * 0.13).toFixed(2)}</span>
+              <span>Tax (13%)</span>
+              <span>${((total + deliveryFee) * 0.13).toFixed(2)}</span>
             </div>
           </div>
 
@@ -246,7 +559,7 @@ export default function CheckoutClient() {
             <div className="flex justify-between text-xl font-bold text-gray-900">
               <span>Total</span>
               <span className="text-orange-600">
-                ${(total * 1.13).toFixed(2)}
+                ${((total + deliveryFee) * 1.13).toFixed(2)}
               </span>
             </div>
           </div>
