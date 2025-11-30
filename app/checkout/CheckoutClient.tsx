@@ -81,11 +81,16 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
         setCustomerName(parsed.name || '');
         setCustomerPhone(parsed.phone || '');
         setCustomerAddress(parsed.address || '');
+
+        // If delivery method is selected and we have address, calculate delivery fee
+        if (deliveryMethod === 'delivery' && parsed.address && parsed.phone) {
+          getDeliveryQuote(parsed.address, parsed.phone);
+        }
       } catch (error) {
         console.error('Error loading saved customer info:', error);
       }
     }
-  }, []);
+  }, [deliveryMethod]);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +102,16 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
     if (deliveryMethod === 'delivery' && !customerAddress) {
       alert('Please enter a delivery address');
+      return;
+    }
+
+    if (deliveryMethod === 'delivery' && deliveryFee === 0 && !deliveryError) {
+      alert('Please wait for delivery fee calculation or try entering your address again');
+      return;
+    }
+
+    if (deliveryMethod === 'delivery' && deliveryError) {
+      alert(`Cannot proceed with delivery: ${deliveryError}`);
       return;
     }
 
