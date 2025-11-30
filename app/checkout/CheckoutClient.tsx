@@ -144,7 +144,10 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
   // Get delivery quote from DoorDash API
   const getDeliveryQuote = async (address: string, phone: string) => {
+    console.log('getDeliveryQuote called with:', { address, phone, addressLength: address.length, phoneLength: phone.length });
+
     if (!address || !phone) {
+      console.warn('⚠️ Missing required fields:', { hasAddress: !!address, hasPhone: !!phone });
       setDeliveryError('');
       setDeliveryFee(0);
       setEstimatedDeliveryTime('');
@@ -166,8 +169,10 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       });
 
       const data = await response.json();
+      console.log('📍 Delivery quote response:', { status: response.ok, data });
 
       if (!response.ok) {
+        console.warn('❌ Quote API error:', data.error);
         setDeliveryError(data.error || 'Failed to get delivery quote');
         setDeliveryFee(0);
         setEstimatedDeliveryTime('');
@@ -176,6 +181,7 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
       // Check if delivery is available (within 100km)
       if (!data.available) {
+        console.warn('❌ Delivery not available:', data.message);
         setDeliveryError(data.message || 'Delivery not available for this address');
         setDeliveryFee(0);
         setEstimatedDeliveryTime('');
@@ -183,6 +189,7 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       }
 
       // Delivery is available - set fee and time
+      console.log('✅ Setting delivery fee:', data.fee);
       setDeliveryFee(data.fee || 0);
       setEstimatedDeliveryTime(data.estimatedDeliveryTime || '');
       setDeliveryError('');
