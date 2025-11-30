@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
-import { DoorDashClient } from '@doordash/sdk';
+
+// Using the official @doordash/sdk
+// @ts-ignore - SDK doesn't have TypeScript types
+const DoorDashClient = require('@doordash/sdk');
 
 export async function POST(request: Request) {
   try {
@@ -13,12 +16,14 @@ export async function POST(request: Request) {
       );
     }
 
-    // Initialize DoorDash client
-    const developerId = process.env.NEXT_PUBLIC_DOORDASH_DEVELOPER_ID;
-    const keyId = process.env.DOORDASH_KEY_ID;
-    const signingSecret = process.env.DOORDASH_SIGNING_SECRET;
+    // Initialize DoorDash client with credentials
+    const tokenContext = {
+      key_id: process.env.DOORDASH_KEY_ID,
+      developer_id: process.env.NEXT_PUBLIC_DOORDASH_DEVELOPER_ID,
+      signing_secret: process.env.DOORDASH_SIGNING_SECRET,
+    };
 
-    if (!developerId || !keyId || !signingSecret) {
+    if (!tokenContext.key_id || !tokenContext.developer_id || !tokenContext.signing_secret) {
       console.error('Missing DoorDash credentials');
       return NextResponse.json(
         { error: 'DoorDash credentials not configured' },
@@ -26,11 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const client = new DoorDashClient({
-      developerId,
-      keyId,
-      signingSecret,
-    });
+    const client = new DoorDashClient.DoorDashClient(tokenContext);
 
     // Get delivery status
     const response = await client.getDelivery(deliveryId);
