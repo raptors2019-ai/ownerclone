@@ -77,11 +77,18 @@ export async function POST(request: Request) {
       amount: totalCents,
     });
   } catch (error: any) {
-    console.error('Payment intent creation error:', error);
+    console.error('Payment intent creation error:', {
+      message: error.message,
+      code: error.code,
+      param: error.param,
+      type: error.type,
+      fullError: String(error),
+    });
     return NextResponse.json(
       {
         error: 'Failed to create payment intent',
         details: error.message || String(error),
+        code: error.code,
       },
       { status: 500 }
     );

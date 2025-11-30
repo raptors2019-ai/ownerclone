@@ -138,7 +138,9 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       const intentData = await intentResponse.json();
 
       if (!intentResponse.ok) {
-        throw new Error(intentData.error || 'Failed to create payment');
+        const errorMsg = intentData.details || intentData.error || 'Failed to create payment';
+        console.error('Payment intent error response:', intentData);
+        throw new Error(errorMsg);
       }
 
       console.log('✅ Payment intent created:', intentData.paymentIntentId);
