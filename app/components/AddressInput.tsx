@@ -23,6 +23,7 @@ export default function AddressInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isValidGooglePlace, setIsValidGooglePlace] = useState(false);
   const autocompleteRef = useRef<any>(null);
 
   useEffect(() => {
@@ -57,9 +58,11 @@ export default function AddressInput({
             const place = autocomplete.getPlace();
             if (place?.formatted_address) {
               console.log('📍 Google place selected:', place.formatted_address);
+              setIsValidGooglePlace(true);
               onChange(place.formatted_address);
             } else {
               console.warn('⚠️ Place selected but no formatted_address found');
+              setIsValidGooglePlace(false);
             }
           });
 
@@ -127,18 +130,23 @@ export default function AddressInput({
         ref={inputRef}
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={() => {
+          // Only allow changes from Google Places selection, not manual typing
+        }}
         className="w-full px-5 py-4 text-lg text-gray-900 bg-transparent border-0 rounded-xl focus:outline-none font-medium placeholder-gray-500"
         placeholder={placeholder}
         required
       />
       {error && (
         <p className="mt-2 text-sm text-orange-600">
-          {error} - Address search unavailable, but you can still type manually
+          {error} - Address search unavailable
         </p>
       )}
       {!isLoaded && !error && (
         <p className="mt-2 text-xs text-gray-500">Loading address suggestions...</p>
+      )}
+      {isLoaded && !value && (
+        <p className="mt-2 text-xs text-gray-500">Type and click to select from Google results</p>
       )}
     </div>
   );

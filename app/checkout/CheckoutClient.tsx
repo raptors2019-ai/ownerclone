@@ -218,15 +218,18 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
     }
   };
 
-  // Handle address change with debounce for DoorDash API calls
+  // Handle address change - only triggered when Google Places selection fires
   const handleAddressChange = (address: string) => {
-    console.log('Address changed:', { address, deliveryMethod, phoneLength: customerPhone.length });
+    console.log('📍 Address selected from Google Places:', address);
     setCustomerAddress(address);
-    if (deliveryMethod === 'delivery' && address.length > 10) {
-      console.log('Triggering delivery quote for:', address);
+
+    // Immediately calculate delivery fee when address is selected from Google
+    if (deliveryMethod === 'delivery' && address && customerPhone) {
+      console.log('✅ Triggering delivery quote for Google-selected address');
       getDeliveryQuote(address, customerPhone);
-    } else if (deliveryMethod === 'delivery' && address.length <= 10) {
-      console.warn('Address too short for quote:', address);
+    } else if (deliveryMethod === 'delivery' && !customerPhone) {
+      console.warn('⚠️ Phone number not entered yet');
+      setDeliveryError('Please enter your phone number first');
     }
   };
 
