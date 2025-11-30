@@ -51,17 +51,23 @@ export async function POST(request: Request) {
     };
 
     // Create PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntentParams: any = {
       amount: totalCents,
       currency: 'usd',
       description,
       metadata,
-      receipt_email: body.customerEmail,
       statement_descriptor_suffix: 'JOES PIZZA',
       automatic_payment_methods: {
         enabled: true,
       },
-    });
+    };
+
+    // Only include receipt_email if provided and valid
+    if (body.customerEmail && body.customerEmail.trim()) {
+      paymentIntentParams.receipt_email = body.customerEmail;
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams);
 
     console.log('✅ PaymentIntent created:', {
       id: paymentIntent.id,
