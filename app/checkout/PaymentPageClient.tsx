@@ -134,11 +134,11 @@ export default function PaymentPageClient({
           </div>
 
           <Link
-            href="/menu"
+            href="/"
             className="inline-flex items-center gap-2 bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition"
           >
             <ArrowLeft size={20} />
-            Back to Menu
+            Back to Home
           </Link>
         </div>
       </div>
