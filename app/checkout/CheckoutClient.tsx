@@ -493,6 +493,7 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
                   <AddressInput
                     value={customerAddress}
                     onChange={handleAddressChange}
+                    onInputChange={(text) => setCustomerAddress(text)}
                     placeholder="123 Main St, Apt 4B, Mississauga, ON L5A 1A1"
                   />
                 </div>

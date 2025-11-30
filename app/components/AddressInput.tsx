@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 interface AddressInputProps {
   value: string;
   onChange: (value: string) => void;
+  onInputChange?: (value: string) => void;
   placeholder?: string;
 }
 
@@ -18,6 +19,7 @@ declare global {
 export default function AddressInput({
   value,
   onChange,
+  onInputChange,
   placeholder = '123 Main St, Apt 4B, Mississauga, ON L5A 1A1',
 }: AddressInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -130,8 +132,11 @@ export default function AddressInput({
         ref={inputRef}
         type="text"
         value={value}
-        onChange={() => {
-          // Only allow changes from Google Places selection, not manual typing
+        onChange={(e) => {
+          // Show typed characters, but only trigger address change on Google Place selection
+          if (onInputChange) {
+            onInputChange(e.target.value);
+          }
         }}
         className="w-full px-5 py-4 text-lg text-gray-900 bg-transparent border-0 rounded-xl focus:outline-none font-medium placeholder-gray-500"
         placeholder={placeholder}
