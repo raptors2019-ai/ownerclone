@@ -105,6 +105,11 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       return;
     }
 
+    if (deliveryMethod === 'delivery' && isLoadingDeliveryQuote) {
+      alert('Please wait for delivery fee calculation to complete...');
+      return;
+    }
+
     if (deliveryMethod === 'delivery' && deliveryFee === 0 && !deliveryError) {
       alert('Please wait for delivery fee calculation or try entering your address again');
       return;
@@ -545,10 +550,14 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
             <button
               type="submit"
-              disabled={isProcessing}
+              disabled={isProcessing || (deliveryMethod === 'delivery' && isLoadingDeliveryQuote)}
               className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
             >
-              {isProcessing ? '⏳ Processing...' : '💳 Proceed to Payment'}
+              {isProcessing
+                ? '⏳ Processing...'
+                : deliveryMethod === 'delivery' && isLoadingDeliveryQuote
+                ? '⏳ Calculating Delivery Fee...'
+                : '💳 Proceed to Payment'}
             </button>
 
             <button
