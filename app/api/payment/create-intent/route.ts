@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       description,
       metadata,
       receipt_email: body.customerEmail,
-      statement_descriptor: 'JOES PIZZA',
+      statement_descriptor_suffix: 'JOES PIZZA',
       automatic_payment_methods: {
         enabled: true,
       },
