@@ -14,6 +14,7 @@ interface PaymentPageProps {
   customerAddress: string;
   deliveryMethod: 'pickup' | 'delivery';
   deliveryFee: number;
+  subtotal: number;
   estimatedDeliveryTime: string;
 }
 
@@ -25,15 +26,16 @@ export default function PaymentPageClient({
   customerAddress,
   deliveryMethod,
   deliveryFee,
+  subtotal,
   estimatedDeliveryTime,
 }: PaymentPageProps) {
-  const { items, total, clearCart } = useCart();
+  const { clearCart } = useCart();
   const [isCreatingDelivery, setIsCreatingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState<string>('');
   const [orderConfirmed, setOrderConfirmed] = useState(false);
 
-  const taxAmount = (total + deliveryFee) * 0.13;
-  const finalTotal = total + deliveryFee + taxAmount;
+  const taxAmount = (subtotal + deliveryFee) * 0.13;
+  const finalTotal = subtotal + deliveryFee + taxAmount;
 
   const handlePaymentSuccess = async (stripePaymentIntentId: string) => {
     console.log('Payment successful:', stripePaymentIntentId);
@@ -112,7 +114,7 @@ export default function PaymentPageClient({
             <div className="space-y-2 text-sm text-gray-600">
               <div className="flex justify-between">
                 <span>Subtotal:</span>
-                <span>${total.toFixed(2)}</span>
+                <span>${subtotal.toFixed(2)}</span>
               </div>
               {deliveryMethod === 'delivery' && (
                 <div className="flex justify-between">
@@ -204,7 +206,7 @@ export default function PaymentPageClient({
             <div className="space-y-3">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>${total.toFixed(2)}</span>
+                <span>${subtotal.toFixed(2)}</span>
               </div>
 
               {deliveryMethod === 'delivery' && (

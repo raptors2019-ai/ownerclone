@@ -20,10 +20,11 @@ export default function PaymentPageWrapper() {
   const customerAddress = searchParams.get('customerAddress');
   const deliveryMethod = searchParams.get('deliveryMethod');
   const deliveryFee = searchParams.get('deliveryFee');
+  const subtotal = searchParams.get('subtotal');
   const estimatedDeliveryTime = searchParams.get('estimatedDeliveryTime');
 
   // Validate required parameters
-  if (!secret || !paymentIntentId || !customerName || !customerPhone || !deliveryMethod) {
+  if (!secret || !paymentIntentId || !customerName || !customerPhone || !deliveryMethod || !subtotal) {
     return (
       <div className="min-h-screen bg-gray-50 py-8 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
@@ -42,6 +43,7 @@ export default function PaymentPageWrapper() {
     );
   }
 
+  const subtotalNum = parseFloat(subtotal);
   const deliveryFeeNum = deliveryFee ? parseFloat(deliveryFee) : 0;
   const deliveryMethodTyped = deliveryMethod as 'pickup' | 'delivery';
 
@@ -75,6 +77,7 @@ export default function PaymentPageWrapper() {
             customerAddress={customerAddress ? decodeURIComponent(customerAddress) : ''}
             deliveryMethod={deliveryMethodTyped}
             deliveryFee={deliveryFeeNum}
+            subtotal={subtotalNum}
             estimatedDeliveryTime={estimatedDeliveryTime ? decodeURIComponent(estimatedDeliveryTime) : ''}
           />
         </Elements>

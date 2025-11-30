@@ -153,6 +153,7 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
         customerPhone: customerPhone,
         deliveryMethod: deliveryMethod,
         deliveryFee: deliveryFee.toString(),
+        subtotal: total.toString(),
       });
 
       if (deliveryMethod === 'delivery') {
