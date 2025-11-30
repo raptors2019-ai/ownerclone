@@ -99,24 +99,26 @@ export default function MenuClient({ categories, menuItems }: MenuClientProps) {
 
                 {/* Quantity Selector & Add to Cart */}
                 <div className="mt-4 flex items-center gap-2">
-                  <button
-                    onClick={() => handleQuantityChange(item.id, -1)}
-                    disabled={(quantities[item.id] || 1) <= 1}
-                    className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    <Minus size={16} />
-                  </button>
+                  <div className="flex items-center border-2 border-orange-500 rounded-lg overflow-hidden bg-white">
+                    <button
+                      onClick={() => handleQuantityChange(item.id, -1)}
+                      disabled={(quantities[item.id] || 1) <= 1}
+                      className="p-2 bg-white hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed transition text-orange-600"
+                    >
+                      <Minus size={18} />
+                    </button>
 
-                  <span className="flex-1 text-center font-semibold">
-                    {quantities[item.id] || 1}
-                  </span>
+                    <span className="flex-1 text-center font-bold text-lg text-gray-900 px-3 py-1 min-w-[2.5rem]">
+                      {quantities[item.id] || 1}
+                    </span>
 
-                  <button
-                    onClick={() => handleQuantityChange(item.id, 1)}
-                    className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition"
-                  >
-                    <Plus size={16} />
-                  </button>
+                    <button
+                      onClick={() => handleQuantityChange(item.id, 1)}
+                      className="p-2 bg-white hover:bg-orange-50 transition text-orange-600"
+                    >
+                      <Plus size={18} />
+                    </button>
+                  </div>
 
                   <button
                     onClick={() => handleAddToCart(item)}
