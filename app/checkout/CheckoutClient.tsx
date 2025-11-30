@@ -1,11 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/lib/CartContext';
 import AddressInput from '@/app/components/AddressInput';
 import { Trash2, ArrowLeft } from 'lucide-react';
+
+const STORAGE_KEY = 'joe_pizza_customer_info';
+
+interface CustomerInfo {
+  name: string;
+  phone: string;
+  address: string;
+}
 
 export default function CheckoutClient() {
   const { items, removeItem, total, clearCart } = useCart();
@@ -13,6 +21,21 @@ export default function CheckoutClient() {
   const [customerPhone, setCustomerPhone] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Load saved customer info on component mount
+  useEffect(() => {
+    const savedInfo = localStorage.getItem(STORAGE_KEY);
+    if (savedInfo) {
+      try {
+        const parsed: CustomerInfo = JSON.parse(savedInfo);
+        setCustomerName(parsed.name || '');
+        setCustomerPhone(parsed.phone || '');
+        setCustomerAddress(parsed.address || '');
+      } catch (error) {
+        console.error('Error loading saved customer info:', error);
+      }
+    }
+  }, []);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +53,14 @@ export default function CheckoutClient() {
     setIsProcessing(true);
 
     try {
+      // Save customer info to localStorage for next time
+      const customerInfo: CustomerInfo = {
+        name: customerName,
+        phone: customerPhone,
+        address: customerAddress,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customerInfo));
+
       // TODO: Call API to create order and process payment
       console.log('Checkout data:', {
         customerName,
@@ -46,6 +77,15 @@ export default function CheckoutClient() {
       alert('An error occurred during checkout');
       setIsProcessing(false);
     }
+  };
+
+  // Clear saved customer info
+  const clearSavedInfo = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setCustomerName('');
+    setCustomerPhone('');
+    setCustomerAddress('');
+    alert('Saved information cleared');
   };
 
   if (items.length === 0) {
@@ -114,55 +154,69 @@ export default function CheckoutClient() {
         </div>
 
         {/* Customer Information */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Delivery Information</h2>
+        <div className="bg-white rounded-lg shadow-lg p-8 border-t-4 border-orange-500">
+          <h2 className="text-3xl font-bold text-orange-700 mb-8">📋 Delivery Information</h2>
+          <p className="text-gray-600 mb-8">Please provide your details below</p>
 
-          <form onSubmit={handleCheckout} className="space-y-6">
+          <form onSubmit={handleCheckout} className="space-y-8">
+            {/* Full Name */}
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-3">
-                Full Name
+              <label className="block text-lg font-bold text-orange-700 mb-2">
+                👤 Full Name *
               </label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-5 py-4 text-lg text-gray-900 bg-amber-50 border-3 border-orange-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition font-medium placeholder-gray-500"
                 placeholder="John Doe"
                 required
               />
             </div>
 
+            {/* Phone Number */}
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-3">
-                Phone Number
+              <label className="block text-lg font-bold text-orange-700 mb-2">
+                📞 Phone Number *
               </label>
               <input
                 type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                className="w-full px-5 py-4 text-lg text-gray-900 bg-amber-50 border-3 border-orange-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition font-medium placeholder-gray-500"
                 placeholder="(123) 456-7890"
                 required
               />
             </div>
 
+            {/* Delivery Address */}
             <div>
-              <label className="block text-base font-bold text-gray-900 mb-3">
-                Delivery Address
+              <label className="block text-lg font-bold text-orange-700 mb-2">
+                📍 Delivery Address *
               </label>
-              <AddressInput
-                value={customerAddress}
-                onChange={setCustomerAddress}
-                placeholder="123 Main St, Apt 4B, Mississauga, ON L5A 1A1"
-              />
+              <div className="bg-amber-50 border-3 border-orange-300 rounded-xl p-1 focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-500 transition">
+                <AddressInput
+                  value={customerAddress}
+                  onChange={setCustomerAddress}
+                  placeholder="123 Main St, Apt 4B, Mississauga, ON L5A 1A1"
+                />
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={isProcessing}
-              className="w-full bg-orange-500 text-white py-3 rounded-lg font-semibold hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white py-4 px-6 rounded-xl font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95"
             >
-              {isProcessing ? 'Processing...' : 'Proceed to Payment'}
+              {isProcessing ? '⏳ Processing...' : '💳 Proceed to Payment'}
+            </button>
+
+            <button
+              type="button"
+              onClick={clearSavedInfo}
+              className="w-full mt-3 bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-6 rounded-xl font-semibold text-sm transition"
+            >
+              🗑️ Clear Saved Information
             </button>
           </form>
         </div>

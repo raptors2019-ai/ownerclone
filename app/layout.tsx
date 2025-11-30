@@ -61,7 +61,6 @@ export default function RootLayout({
                 <h4 className="font-bold mb-2">Quick Links</h4>
                 <ul className="text-gray-400 space-y-1">
                   <li><Link href="/menu" className="hover:text-white">Menu</Link></li>
-                  <li><Link href="/" className="hover:text-white">Home</Link></li>
                 </ul>
               </div>
               <div>
