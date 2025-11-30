@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/lib/CartContext';
@@ -56,6 +56,14 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
   };
 
   const displayItems = getCarouselDisplayItems();
+
+  // Auto-calculate delivery fee when address and phone are both present
+  useEffect(() => {
+    if (deliveryMethod === 'delivery' && customerAddress && customerPhone.trim()) {
+      console.log('✅ Auto-calculating delivery fee - address and phone both present');
+      getDeliveryQuote(customerAddress, customerPhone.trim());
+    }
+  }, [customerAddress, customerPhone, deliveryMethod]);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,7 +151,7 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
   };
 
   // Get delivery quote from DoorDash API
-  const getDeliveryQuote = async (address: string, phone: string) => {
+  const getDeliveryQuote = useCallback(async (address: string, phone: string) => {
     console.log('getDeliveryQuote called with:', { address, phone, addressLength: address.length, phoneLength: phone.length });
 
     if (!address || !phone) {
@@ -201,7 +209,7 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
     } finally {
       setIsLoadingDeliveryQuote(false);
     }
-  };
+  }, []);
 
   // Handle delivery method change
   const handleDeliveryMethodChange = (method: DeliveryMethod) => {
@@ -220,20 +228,9 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
   // Handle address change - only triggered when Google Places selection fires
   const handleAddressChange = (address: string) => {
-    console.log('📍 Address selected from Google Places:', { address, customerPhone, phoneLength: customerPhone?.length, trim: customerPhone?.trim() });
+    console.log('📍 Address selected from Google Places:', address);
     setCustomerAddress(address);
-
-    // Trim phone to remove whitespace
-    const trimmedPhone = customerPhone.trim();
-
-    // Immediately calculate delivery fee when address is selected from Google
-    if (deliveryMethod === 'delivery' && address && trimmedPhone) {
-      console.log('✅ Triggering delivery quote with phone:', trimmedPhone);
-      getDeliveryQuote(address, trimmedPhone);
-    } else if (deliveryMethod === 'delivery' && !trimmedPhone) {
-      console.warn('⚠️ Phone number not entered yet - value:', customerPhone);
-      setDeliveryError('Please enter your phone number first');
-    }
+    // useEffect will automatically calculate fee when both address and phone are present
   };
 
   // Handle carousel quantity change
