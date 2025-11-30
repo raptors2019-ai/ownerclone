@@ -220,15 +220,18 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
   // Handle address change - only triggered when Google Places selection fires
   const handleAddressChange = (address: string) => {
-    console.log('📍 Address selected from Google Places:', address);
+    console.log('📍 Address selected from Google Places:', { address, customerPhone, phoneLength: customerPhone?.length, trim: customerPhone?.trim() });
     setCustomerAddress(address);
 
+    // Trim phone to remove whitespace
+    const trimmedPhone = customerPhone.trim();
+
     // Immediately calculate delivery fee when address is selected from Google
-    if (deliveryMethod === 'delivery' && address && customerPhone) {
-      console.log('✅ Triggering delivery quote for Google-selected address');
-      getDeliveryQuote(address, customerPhone);
-    } else if (deliveryMethod === 'delivery' && !customerPhone) {
-      console.warn('⚠️ Phone number not entered yet');
+    if (deliveryMethod === 'delivery' && address && trimmedPhone) {
+      console.log('✅ Triggering delivery quote with phone:', trimmedPhone);
+      getDeliveryQuote(address, trimmedPhone);
+    } else if (deliveryMethod === 'delivery' && !trimmedPhone) {
+      console.warn('⚠️ Phone number not entered yet - value:', customerPhone);
       setDeliveryError('Please enter your phone number first');
     }
   };
