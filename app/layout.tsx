@@ -39,18 +39,6 @@ export default function RootLayout({
                   🍕 Joe's Pizza
                 </Link>
                 <div className="flex gap-6 items-center">
-                  <Link
-                    href="/"
-                    className="text-white hover:text-amber-100 transition"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="/menu"
-                    className="text-white hover:text-amber-100 transition"
-                  >
-                    Menu
-                  </Link>
                   <CartIcon />
                 </div>
               </div>

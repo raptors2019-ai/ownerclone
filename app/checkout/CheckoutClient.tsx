@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from '@/lib/CartContext';
+import AddressInput from '@/app/components/AddressInput';
 import { Trash2, ArrowLeft } from 'lucide-react';
 
 export default function CheckoutClient() {
@@ -116,43 +117,43 @@ export default function CheckoutClient() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Delivery Information</h2>
 
-          <form onSubmit={handleCheckout} className="space-y-4">
+          <form onSubmit={handleCheckout} className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Name
+              <label className="block text-base font-bold text-gray-900 mb-3">
+                Full Name
               </label>
               <input
                 type="text"
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                placeholder="Your name"
+                className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                placeholder="John Doe"
+                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base font-bold text-gray-900 mb-3">
                 Phone Number
               </label>
               <input
                 type="tel"
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                placeholder="(XXX) XXX-XXXX"
+                className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition"
+                placeholder="(123) 456-7890"
+                required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-base font-bold text-gray-900 mb-3">
                 Delivery Address
               </label>
-              <textarea
+              <AddressInput
                 value={customerAddress}
-                onChange={(e) => setCustomerAddress(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                placeholder="Street address, apt/unit, city, postal code"
+                onChange={setCustomerAddress}
+                placeholder="123 Main St, Apt 4B, Mississauga, ON L5A 1A1"
               />
             </div>
 
