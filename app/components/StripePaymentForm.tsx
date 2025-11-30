@@ -49,7 +49,7 @@ export default function StripePaymentForm({
       if (error) {
         // Payment failed
         console.error('Payment error:', error);
-        const errorMsg = error.message || 'Payment failed. Please try again.';
+        const errorMsg = error.message || error.code || 'Payment failed. Please try again.';
         setErrorMessage(errorMsg);
         setPaymentStatus('error');
         onPaymentError(errorMsg);
