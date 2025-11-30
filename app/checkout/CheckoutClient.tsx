@@ -57,6 +57,21 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
 
   const displayItems = getCarouselDisplayItems();
 
+  // Load customer name and phone from localStorage on mount
+  useEffect(() => {
+    const savedName = localStorage.getItem('customerName');
+    const savedPhone = localStorage.getItem('customerPhone');
+
+    if (savedName) {
+      console.log('📝 Loading saved customer name from localStorage');
+      setCustomerName(savedName);
+    }
+    if (savedPhone) {
+      console.log('📝 Loading saved customer phone from localStorage');
+      setCustomerPhone(savedPhone);
+    }
+  }, []);
+
   // Auto-calculate delivery fee when address and phone are both present
   useEffect(() => {
     if (deliveryMethod === 'delivery' && customerAddress && customerPhone.trim()) {
@@ -64,6 +79,16 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       getDeliveryQuote(customerAddress, customerPhone.trim());
     }
   }, [customerAddress, customerPhone, deliveryMethod]);
+
+  // Save customer name and phone to localStorage whenever they change
+  useEffect(() => {
+    if (customerName) {
+      localStorage.setItem('customerName', customerName);
+    }
+    if (customerPhone) {
+      localStorage.setItem('customerPhone', customerPhone);
+    }
+  }, [customerName, customerPhone]);
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();

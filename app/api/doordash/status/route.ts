@@ -9,6 +9,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { deliveryId } = body;
 
+    console.log('🔍 Status endpoint called with deliveryId:', deliveryId);
+
     if (!deliveryId) {
       return NextResponse.json(
         { error: 'Delivery ID is required' },
@@ -34,28 +36,64 @@ export async function POST(request: Request) {
     const client = new DoorDashClient.DoorDashClient(tokenContext);
 
     // Get delivery status
-    const response = await client.getDelivery(deliveryId);
+    console.log('📍 Fetching delivery status for ID:', deliveryId);
+    console.log('🔧 Client initialized:', typeof client, Object.keys(client));
+
+    let response;
+    try {
+      response = await client.getDelivery(deliveryId);
+      console.log('📦 Raw response received:', JSON.stringify(response, null, 2));
+    } catch (sdkError: any) {
+      console.error('❌ SDK error calling getDelivery:', {
+        message: sdkError.message,
+        code: sdkError.code,
+        status: sdkError.status,
+        details: sdkError.details,
+        stack: sdkError.stack,
+      });
+      throw sdkError;
+    }
+
+    if (!response || !response.data) {
+      console.error('⚠️ Invalid response structure:', response);
+      return NextResponse.json(
+        {
+          error: 'Invalid response from DoorDash',
+          receivedResponse: String(response),
+        },
+        { status: 500 }
+      );
+    }
 
     console.log('✅ Delivery status retrieved:', {
       id: response.data.id,
+      externalId: response.data.external_delivery_id,
       status: response.data.delivery_status,
       trackingUrl: response.data.tracking_url,
     });
 
     return NextResponse.json({
       success: true,
-      deliveryId: response.data.id,
+      deliveryId: response.data.id || response.data.external_delivery_id,
+      externalDeliveryId: response.data.external_delivery_id,
       status: response.data.delivery_status,
       trackingUrl: response.data.tracking_url,
       deliveryStatus: response.data.delivery_status,
       data: response.data,
     });
   } catch (error: any) {
-    console.error('Error getting delivery status:', error);
+    console.error('❌ Error getting delivery status:', {
+      message: error.message,
+      code: error.code,
+      status: error.status,
+      stack: error.stack,
+      fullError: String(error),
+    });
     return NextResponse.json(
       {
         error: 'Failed to get delivery status',
         details: error.message || String(error),
+        code: error.code,
       },
       { status: 500 }
     );
