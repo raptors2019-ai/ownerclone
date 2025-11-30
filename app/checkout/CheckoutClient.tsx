@@ -116,20 +116,53 @@ export default function CheckoutClient({ menuItems = [] }: CheckoutClientProps) 
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(customerInfo));
 
-      // TODO: Call API to create order and process payment
-      console.log('Checkout data:', {
-        customerName,
-        customerPhone,
-        customerAddress,
-        items,
-        total,
+      // Calculate tax
+      const taxAmount = (total + deliveryFee) * 0.13;
+
+      // Create Stripe payment intent
+      const intentResponse = await fetch('/api/payment/create-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subtotal: total,
+          deliveryFee: deliveryFee,
+          taxAmount: taxAmount,
+          customerName: customerName,
+          customerPhone: customerPhone,
+          customerEmail: '', // Optional: could be added as a form field
+          deliveryMethod: deliveryMethod,
+          deliveryAddress: customerAddress,
+        }),
       });
 
-      alert('Coming soon: Stripe integration for payment processing');
-      setIsProcessing(false);
+      const intentData = await intentResponse.json();
+
+      if (!intentResponse.ok) {
+        throw new Error(intentData.error || 'Failed to create payment');
+      }
+
+      console.log('✅ Payment intent created:', intentData.paymentIntentId);
+
+      // Build query parameters for payment page
+      const params = new URLSearchParams({
+        secret: intentData.clientSecret,
+        paymentIntentId: intentData.paymentIntentId,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        deliveryMethod: deliveryMethod,
+        deliveryFee: deliveryFee.toString(),
+      });
+
+      if (deliveryMethod === 'delivery') {
+        params.append('customerAddress', customerAddress);
+        params.append('estimatedDeliveryTime', estimatedDeliveryTime);
+      }
+
+      // Redirect to payment page
+      window.location.href = `/payment?${params.toString()}`;
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('An error occurred during checkout');
+      alert(error instanceof Error ? error.message : 'An error occurred during checkout');
       setIsProcessing(false);
     }
   };

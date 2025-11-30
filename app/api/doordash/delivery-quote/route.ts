@@ -32,8 +32,8 @@ export async function POST(request: Request) {
     const cleanPhone = body.customerPhone.replace(/\D/g, '');
     const formattedCustomerPhone = `+1${cleanPhone.slice(-10)}`;
 
-    // Format restaurant phone (default to restaurant's actual number if not provided)
-    const restaurantPhoneRaw = body.restaurantPhone || '6479206806'; // Joe's Pizza GTA
+    // Format restaurant phone (Joe's Pizza GTA)
+    const restaurantPhoneRaw = '6479206806'; // Joe's Pizza GTA
     const cleanRestaurantPhone = restaurantPhoneRaw.replace(/\D/g, '');
     const formattedRestaurantPhone = `+1${cleanRestaurantPhone.slice(-10)}`;
 
