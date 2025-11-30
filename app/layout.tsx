@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { CartProvider } from "@/lib/CartContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -54,7 +55,9 @@ export default function RootLayout({
         </nav>
 
         {/* Main Content */}
-        <main className="min-h-screen">{children}</main>
+        <CartProvider>
+          <main className="min-h-screen">{children}</main>
+        </CartProvider>
 
         {/* Footer */}
         <footer className="bg-gray-900 text-white py-8 mt-12">
