@@ -72,10 +72,37 @@ export default function PaymentPageClient({
           // User can still see their order confirmation
         } else {
           console.log('✅ DoorDash delivery created:', deliveryData);
-          // Store delivery ID and tracking URL
+          // Store delivery ID
           if (deliveryData.deliveryId) {
             setDeliveryId(deliveryData.deliveryId);
+
+            // Fetch status to get tracking URL (it may not be available immediately on creation)
+            try {
+              const statusResponse = await fetch('/api/doordash/status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deliveryId: deliveryData.deliveryId }),
+              });
+
+              if (statusResponse.ok) {
+                const statusData = await statusResponse.json();
+                console.log('✅ Delivery status fetched:', statusData);
+                if (statusData.trackingUrl) {
+                  setTrackingUrl(statusData.trackingUrl);
+                }
+                if (statusData.status) {
+                  setDeliveryStatus(statusData.status);
+                }
+              } else {
+                console.warn('Failed to fetch delivery status:', statusResponse.status);
+              }
+            } catch (statusError) {
+              console.error('Error fetching delivery status:', statusError);
+              // Don't fail if we can't get status - tracking link will say "coming soon"
+            }
           }
+
+          // Also set initial status from creation response if available
           if (deliveryData.trackingUrl) {
             setTrackingUrl(deliveryData.trackingUrl);
           }
